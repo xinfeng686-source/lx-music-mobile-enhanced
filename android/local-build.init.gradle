@@ -1,0 +1,22 @@
+// Repair Windows encrypted copies of the NDK runtime in generated CMake output.
+allprojects {
+    plugins.withId('com.android.application') {
+        project.extensions.getByName('android').buildTypes.getByName('debug').applicationIdSuffix = '.seektest'
+    }
+    plugins.withId('com.facebook.react') {
+        if (project.name == 'app') project.extensions.getByName('react').debuggableVariants = []
+    }
+    tasks.configureEach { task ->
+        if (task.name.startsWith('buildCMake') && task.name.contains('arm64-v8a')) {
+            task.doNotTrackState('Windows encrypted NDK copy is repaired after CMake')
+            task.doLast {
+                def source = new File('D:/Codex work space/lx music/libc++_shared-arm64.so')
+                project.fileTree('build/intermediates/cxx').matching { include '**/arm64-v8a/libc++_shared.so' }.each { target ->
+                    def replacement = new File(target.path + '.fixed')
+                    replacement.bytes = source.bytes
+                    java.nio.file.Files.move(replacement.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
+        }
+    }
+}
