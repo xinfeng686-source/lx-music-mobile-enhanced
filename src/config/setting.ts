@@ -12,6 +12,16 @@ import { exitApp, tipDialog } from '@/utils/tools'
 const primitiveType = ['string', 'boolean', 'number']
 const checkPrimitiveType = (val: any): boolean => val === null || primitiveType.includes(typeof val)
 
+// Only these two settings accept structured values. Validate on edits and restore.
+const checkSettingValue = (key: keyof LX.AppSetting, value: any): boolean => {
+  if (key !== 'player.listSkip' && key !== 'player.songSkip') return checkPrimitiveType(value)
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  return Object.values(value as Record<string, unknown>).every((rule: any) => rule && typeof rule === 'object' && !Array.isArray(rule) &&
+    Number.isInteger(rule.intro) && rule.intro >= 0 && rule.intro <= 120 &&
+    Number.isInteger(rule.outro) && rule.outro >= 0 && rule.outro <= 120 &&
+    (key !== 'player.songSkip' || typeof rule.enabled === 'boolean'))
+}
+
 const mergeSetting = (originSetting: LX.AppSetting, targetSetting?: Partial<LX.AppSetting> | null): {
   setting: LX.AppSetting
   updatedSettingKeys: Array<keyof LX.AppSetting>
@@ -29,7 +39,7 @@ const mergeSetting = (originSetting: LX.AppSetting, targetSetting?: Partial<LX.A
     if (originSettingKeys.length > targetSettingKeys.length) {
       for (const key of targetSettingKeys as Array<keyof LX.AppSetting>) {
         const targetValue: any = targetSetting[key]
-        const isPrimitive = checkPrimitiveType(targetValue)
+        const isPrimitive = checkSettingValue(key, targetValue)
         // if (checkPrimitiveType(value)) {
         if (!isPrimitive || targetValue == originSettingCopy[key] || originSettingCopy[key] === undefined) continue
         updatedSettingKeys.push(key)
@@ -43,7 +53,7 @@ const mergeSetting = (originSetting: LX.AppSetting, targetSetting?: Partial<LX.A
     } else {
       for (const key of originSettingKeys as Array<keyof LX.AppSetting>) {
         const targetValue: any = targetSetting[key]
-        const isPrimitive = checkPrimitiveType(targetValue)
+        const isPrimitive = checkSettingValue(key, targetValue)
         // if (checkPrimitiveType(value)) {
         if (!isPrimitive || targetValue == originSettingCopy[key]) continue
         updatedSettingKeys.push(key)

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react'
 import { View } from 'react-native'
+import { AUDIO_FILE_EXTENSIONS } from '@/config/audioFiles'
 import { externalStorageDirectoryPath, readDir } from '@/utils/fs'
 import { createStyle, toast } from '@/utils/tools'
 // import { useTranslation } from '@/plugins/i18n'
@@ -71,20 +72,24 @@ interface ReadOptions {
   title: string
   dirOnly: boolean
   filter?: string[]
+  multiSelect?: boolean
+  audioFiles?: boolean
 }
 const initReadOptions = {}
 export interface ListProps {
   onConfirm: (path: string) => void
+  onConfirmMany?: (paths: string[]) => void
   onHide?: () => void
 }
 
 export interface ListType {
-  show: (title: string, dir?: string, dirOnly?: boolean, filter?: string[]) => void
+  show: (title: string, dir?: string, dirOnly?: boolean, filter?: string[], multiSelect?: boolean, audioFiles?: boolean) => void
   hide: () => void
 }
 
 export default forwardRef<ListType, ListProps>(({
   onConfirm,
+  onConfirmMany,
   onHide = () => {},
 }: ListProps, ref) => {
   const [path, setPath] = useState('')
@@ -92,16 +97,20 @@ export default forwardRef<ListType, ListProps>(({
   const isUnmountedRef = useRef(true)
   const readOptions = useRef<ReadOptions>(initReadOptions as ReadOptions)
   const [isReading, setIsReading] = useState(false)
+  const [selectedPaths, setSelectedPaths] = useState<string[]>([])
   const modalRef = useRef<ModalType>(null)
   const theme = useTheme()
 
   useImperativeHandle(ref, () => ({
-    show(title, dir = '', dirOnly = false, filter) {
+    show(title, dir = '', dirOnly = false, filter, multiSelect = false, audioFiles = false) {
       readOptions.current = {
         title,
         dirOnly,
         filter,
+        multiSelect,
+        audioFiles,
       }
+      setSelectedPaths([])
       modalRef.current?.setVisible(true)
       // void getSelectedManagedFolder().then(uri => {
       //   if (!uri) return
@@ -147,11 +156,17 @@ export default forwardRef<ListType, ListProps>(({
     if (pathInfo.isDir) {
       void readDir(pathInfo.path, readOptions.current.dirOnly, readOptions.current.filter)
     } else {
-      onConfirm(pathInfo.path)
+      if (readOptions.current.multiSelect) setSelectedPaths(prev => prev.includes(pathInfo.path) ? prev.filter(path => path !== pathInfo.path) : [...prev, pathInfo.path])
+      else onConfirm(pathInfo.path)
       // setPath(pathInfo.path)
     }
   }
   const handleConfirm = () => {
+    if (isReading) return
+    if (readOptions.current.multiSelect) {
+      if (selectedPaths.length) onConfirmMany?.(selectedPaths)
+      return
+    }
     if (!path) return
     onConfirm(path)
   }
@@ -165,6 +180,13 @@ export default forwardRef<ListType, ListProps>(({
     }
   }
 
+  const toggleAudioMode = () => {
+    if (isReading) return
+    const multiSelect = !readOptions.current.multiSelect
+    readOptions.current = { ...readOptions.current, multiSelect, dirOnly: !multiSelect, filter: multiSelect ? AUDIO_FILE_EXTENSIONS : undefined }
+    void readDir(path, !multiSelect, readOptions.current.filter)
+  }
+
   const handleHide = () => {
     modalRef.current?.setVisible(false)
     onHide()
@@ -176,12 +198,14 @@ export default forwardRef<ListType, ListProps>(({
     <Modal ref={modalRef} bgHide={false} statusBarPadding={false}>
       <View style={{ ...styles.container, backgroundColor: theme['c-content-background'] }}>
         <Header
+          onToggleAudio={readOptions.current.audioFiles ? toggleAudioMode : undefined}
+          audioMode={readOptions.current.multiSelect}
           onRefreshDir={async(path) => readDir(path, readOptions.current.dirOnly, readOptions.current.filter, true)}
           onOpenDir={async(path) => readDir(path, readOptions.current.dirOnly, readOptions.current.filter, false, true)}
           title={readOptions.current.title}
           path={path} />
-        <Main list={list} toParentDir={toParentDir} onSetPath={onSetPath} loading={isReading} />
-        <Footer onConfirm={handleConfirm} onHide={handleHide} dirOnly={readOptions.current.dirOnly} />
+        <Main list={list} toParentDir={toParentDir} onSetPath={onSetPath} loading={isReading} selectable={readOptions.current.multiSelect} selectedPaths={selectedPaths} onToggle={onSetPath} />
+        <Footer onConfirm={handleConfirm} onHide={handleHide} dirOnly={!!(readOptions.current.dirOnly || readOptions.current.multiSelect)} selectedCount={selectedPaths.length} multiSelect={readOptions.current.multiSelect} />
       </View>
     </Modal>
   )

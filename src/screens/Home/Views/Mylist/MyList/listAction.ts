@@ -189,6 +189,43 @@ const handleUpdateMusics = async(filePaths: string[],
     throttleUpdateMusics([], errorPath)
   }
 }
+export const handleImportSelectedMediaFiles = async(listInfo: LX.List.MyListInfo, selectedPaths: string[]) => {
+  const paths = [...new Set(selectedPaths)]
+  if (!paths.length) return
+  let fetching = false
+  try {
+    if (!await confirmDialog({ message: global.i18n.t('audio_files_confirm', { count: paths.length, name: listInfo.name }) })) return
+    setFetchingListStatus(listInfo.id, true)
+    fetching = true
+    toast(global.i18n.t('audio_files_importing'))
+    const existing = new Set((await getListMusics(listInfo.id)).map(info => info.id))
+    const musicInfos: LX.Music.MusicInfoLocal[] = []
+    let skipped = 0
+    let failed = 0
+    for (const path of paths) {
+      if (existing.has(path)) {
+        skipped++
+        continue
+      }
+      try {
+        const metadata = await readMetadata(path)
+        if (!metadata) throw new Error('No audio metadata')
+        musicInfos.push(buildLocalMusicInfo(path, metadata))
+      } catch (error) {
+        failed++
+        log.warn(`Read audio metadata failed: ${path}: ${String(error)}`)
+      }
+    }
+    if (musicInfos.length) await addListMusics(listInfo.id, musicInfos, settingState.setting['list.addMusicLocationType'])
+    toast(global.i18n.t('audio_files_result', { success: musicInfos.length, skipped, failed }), 'long')
+  } catch (error) {
+    log.error(error)
+    toast(global.i18n.t('audio_files_error'), 'long')
+  } finally {
+    if (fetching) setFetchingListStatus(listInfo.id, false)
+  }
+}
+
 export const handleImportMediaFile = async(listInfo: LX.List.MyListInfo, path: string) => {
   setFetchingListStatus(listInfo.id, true)
   const files = await scanAudioFiles(path)

@@ -22,11 +22,11 @@ const SettingSeekSeconds = ({ direction }: { direction: 'backward' | 'forward' }
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { flex: 1, minWidth: 0 }]}>
       <Text>{t(direction == 'backward' ? 'play_detail_setting_seek_backward' : 'play_detail_setting_seek_forward')}</Text>
-      <View style={styles.content}>
-        <Input value={value} onChangeText={saveValue} onBlur={() => { setValue(String(settingValue)) }} keyboardType='number-pad' maxLength={2} style={{ width: 55, flexGrow: 0 }} />
-        <Text>s（1-30）</Text>
+      <View style={[styles.content, { width: '100%' }]}>
+        <Input value={value} onChangeText={saveValue} onBlur={() => { setValue(String(settingValue)) }} keyboardType='number-pad' maxLength={2} style={{ width: 55, flexGrow: 0, flexShrink: 1 }} />
+        <Text>s</Text>
       </View>
     </View>
   )

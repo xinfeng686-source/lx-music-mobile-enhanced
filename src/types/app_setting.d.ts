@@ -146,6 +146,8 @@ declare global {
 
       /** 快进秒数，最大30秒 */
       'player.seekForwardSeconds': number
+      'player.listSkip': Record<string, { intro: number, outro: number }>
+      'player.songSkip': Record<string, { intro: number, outro: number, enabled: boolean }>
 
       /**
        * 缓存大小设置 unit MiB

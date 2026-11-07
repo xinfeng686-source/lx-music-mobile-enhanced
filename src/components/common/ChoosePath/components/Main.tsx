@@ -8,11 +8,14 @@ import ListItem, { type PathItem } from './ListItem'
 import LoadingMask, { type LoadingMaskType } from '@/components/common/LoadingMask'
 
 
-export default ({ list, loading, onSetPath, toParentDir }: {
+export default ({ list, loading, onSetPath, toParentDir, selectable, selectedPaths, onToggle }: {
   list: PathItem[]
   loading: boolean
   onSetPath: (item: PathItem) => void
   toParentDir: () => void
+  selectable?: boolean
+  selectedPaths?: string[]
+  onToggle?: (item: PathItem) => void
 }) => {
   const t = useI18n()
   const theme = useTheme()
@@ -22,12 +25,12 @@ export default ({ list, loading, onSetPath, toParentDir }: {
 
   const ParentItemComponent = useMemo(() => (
     <View style={{ backgroundColor: theme['c-primary-light-700-alpha-900'] }}>
-      <ListItem item={{
-        name: '..',
-        desc: t('parent_dir_name'),
-        isDir: true,
-        path: '',
-      }} rowInfo={fullRow.current} onPress={toParentDir} />
+        <ListItem item={{
+          name: '..',
+          desc: t('parent_dir_name'),
+          isDir: true,
+          path: '',
+        }} rowInfo={fullRow.current} onPress={toParentDir} />
     </View>
   ), [t, theme, toParentDir])
 
@@ -40,12 +43,13 @@ export default ({ list, loading, onSetPath, toParentDir }: {
       keyboardShouldPersistTaps={'always'}
       style={styles.list}
       data={list}
+      extraData={selectedPaths}
       numColumns={rowInfo.current.rowNum}
-      renderItem={({ item }) => <ListItem item={item} rowInfo={rowInfo.current} onPress={onSetPath} />}
+      renderItem={({ item }) => <ListItem item={item} rowInfo={rowInfo.current} onPress={onSetPath} selectable={selectable} selected={selectedPaths?.includes(item.path)} onToggle={onToggle} />}
       keyExtractor={item => item.path + '/' + item.name}
       removeClippedSubviews={true}
     />
-  ), [list, onSetPath])
+  ), [list, onSetPath, selectable, selectedPaths, onToggle])
 
   // const dirList = useMemo(() => [parentDir, ...list], [list, parentDir])
 

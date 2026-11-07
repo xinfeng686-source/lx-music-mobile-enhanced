@@ -10,6 +10,7 @@ import { useStatusbarHeight } from '@/store/common/hook'
 import NewFolderModal, { type NewFolderType } from './NewFolderModal'
 import OpenStorageModal, { type OpenDirModalType } from './OpenStorageModal'
 import type { PathItem } from './ListItem'
+import { useI18n } from '@/lang'
 
 
 export default memo(({
@@ -17,13 +18,18 @@ export default memo(({
   path,
   onRefreshDir,
   onOpenDir,
+  onToggleAudio,
+  audioMode,
 }: {
   title: string
   path: string
   onRefreshDir: (dir: string) => Promise<PathItem[]>
   onOpenDir: (dir: string) => Promise<PathItem[]>
+  onToggleAudio?: () => void
+  audioMode?: boolean
 }) => {
   const theme = useTheme()
+  const t = useI18n()
   const newFolderTypeRef = useRef<NewFolderType>(null)
   const openDirModalTypeRef = useRef<OpenDirModalType>(null)
   const storagePathsRef = useRef<string[]>([])
@@ -66,10 +72,13 @@ export default memo(({
         backgroundColor: theme['c-content-background'],
       }} onStartShouldSetResponder={() => true}>
         <View style={styles.titleContent}>
-          <Text color={theme['c-primary-font']} numberOfLines={1}>{title}</Text>
+          <Text color={theme['c-primary-font']} numberOfLines={1}>{audioMode ? t('audio_files_title') : title}</Text>
           <Text style={styles.subTitle} color={theme['c-primary-font']} size={13} numberOfLines={1}>{path}</Text>
         </View>
         <View style={styles.actions}>
+          {onToggleAudio ? <TouchableOpacity style={styles.actionBtn} onPress={onToggleAudio} accessibilityRole="button">
+            <Text color={theme['c-primary-font']} size={12}>{t(audioMode ? 'audio_files_folder_mode' : 'audio_files_select')}</Text>
+          </TouchableOpacity> : null}
           <TouchableOpacity style={styles.actionBtn} onPress={openStorage}>
             <Icon name="sd-card" color={theme['c-primary-font']} size={22} />
           </TouchableOpacity>

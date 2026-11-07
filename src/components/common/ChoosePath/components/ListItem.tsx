@@ -16,10 +16,13 @@ export interface PathItem {
   disabled?: boolean
 }
 
-export default memo(({ item, onPress, rowInfo }: {
+export default memo(({ item, onPress, rowInfo, selectable, selected, onToggle }: {
   item: PathItem
   onPress: (item: PathItem) => void
   rowInfo: RowInfo
+  selectable?: boolean
+  selected?: boolean
+  onToggle?: (item: PathItem) => void
 }) => {
   const theme = useTheme()
 
@@ -48,15 +51,17 @@ export default memo(({ item, onPress, rowInfo }: {
             }
           </View>
         ) : (
-          <TouchableOpacity style={styles.listItem} onPress={ () => { onPress(item) } }>
+          <TouchableOpacity style={styles.listItem} accessibilityRole={selectable && !item.isDir ? 'checkbox' : 'button'} accessibilityState={selectable && !item.isDir ? { checked: !!selected } : undefined} onPress={() => { selectable && !item.isDir ? onToggle?.(item) : onPress(item) }}>
             <View style={styles.itemInfo}>
               <Text style={styles.listItemTitleText}>{item.name}</Text>
               <Text style={styles.listItemDesc} size={12} color={theme['c-font-label']} numberOfLines={1}>{item.mtime ? new Date(item.mtime).toLocaleString() : item.desc}</Text>
             </View>
             {
-              item.isDir
-                ? <Icon name="chevron-right" color={theme['c-primary-light-100-alpha-600']} size={18} />
-                : <Text style={styles.size} size={12} color={theme['c-font-label']}>{item.sizeText}</Text>
+              selectable && !item.isDir
+                ? <Text color={theme['c-primary-light-100-alpha-600']}>{selected ? '✓' : '○'}</Text>
+                : item.isDir
+                  ? <Icon name="chevron-right" color={theme['c-primary-light-100-alpha-600']} size={18} />
+                  : <Text style={styles.size} size={12} color={theme['c-font-label']}>{item.sizeText}</Text>
             }
           </TouchableOpacity>
         )

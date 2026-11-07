@@ -18,11 +18,13 @@ export interface ReadOptions {
   isPersist?: boolean
   dirOnly?: boolean
   filter?: string[]
+  audioFiles?: boolean
 }
 const initReadOptions = {}
 
 interface ChoosePathProps {
   onConfirm: (path: string) => void
+  onConfirmMany?: (paths: string[]) => void
 }
 
 export interface ChoosePathType {
@@ -31,6 +33,7 @@ export interface ChoosePathType {
 
 export default forwardRef<ChoosePathType, ChoosePathProps>(({
   onConfirm = () => {},
+  onConfirmMany,
 }: ChoosePathProps, ref) => {
   const t = useI18n()
   const listRef = useRef<ListType>(null)
@@ -43,7 +46,7 @@ export default forwardRef<ChoosePathType, ChoosePathProps>(({
     return checkStoragePermissions().then(isGranted => {
       readOptions.current = options
       if (isGranted) {
-        listRef.current?.show(options.title, '', options.dirOnly, options.filter)
+        listRef.current?.show(options.title, '', options.dirOnly, options.filter, false, options.audioFiles)
       } else {
         confirmAlertRef.current?.setVisible(true)
       }
@@ -52,7 +55,7 @@ export default forwardRef<ChoosePathType, ChoosePathProps>(({
 
   useImperativeHandle(ref, () => ({
     show(options) {
-      if (!settingState.setting['common.useSystemFileSelector'] || options.dirOnly) {
+      if (!settingState.setting['common.useSystemFileSelector'] || options.dirOnly === true || options.audioFiles === true) {
         // if (options.isPersist) {
         void handleOpenExternalStorage(options)
         // } else {
@@ -102,7 +105,7 @@ export default forwardRef<ChoosePathType, ChoosePathProps>(({
       // console.log(result)
       setDeny(result == null)
       if (result) {
-        listRef.current?.show(readOptions.current.title, '', readOptions.current.dirOnly, readOptions.current.filter)
+        listRef.current?.show(readOptions.current.title, '', readOptions.current.dirOnly, readOptions.current.filter, false, readOptions.current.audioFiles)
       } else {
         toast(t('storage_permission_tip_disagree'), 'long')
       }
@@ -115,7 +118,10 @@ export default forwardRef<ChoosePathType, ChoosePathProps>(({
 
   return (
     <>
-      <List ref={listRef} onConfirm={onPathConfirm} />
+      <List ref={listRef} onConfirm={onPathConfirm} onConfirmMany={paths => {
+        listRef.current?.hide()
+        onConfirmMany?.(paths)
+      }} />
       <ConfirmAlert
         ref={confirmAlertRef}
         onCancel={handleTipsCancel}

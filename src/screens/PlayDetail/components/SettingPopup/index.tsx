@@ -9,6 +9,7 @@ import SettingPlaybackRate from './settings/SettingPlaybackRate'
 import SettingLrcFontSize from './settings/SettingLrcFontSize'
 import SettingLrcAlign from './settings/SettingLrcAlign'
 import SettingSeekSeconds from './settings/SettingSeekSeconds'
+import SettingListSkip from './settings/SettingListSkip'
 
 export interface SettingPopupProps extends Omit<PopupProps, 'children'> {
   direction: 'vertical' | 'horizontal'
@@ -46,8 +47,11 @@ export default forwardRef<SettingPopupType, SettingPopupProps>(({ direction, ...
               <SettingLyricProgress />
               <SettingVolume />
               <SettingPlaybackRate />
-              <SettingSeekSeconds direction='backward' />
-              <SettingSeekSeconds direction='forward' />
+              <View style={{ flexDirection: 'row' }}>
+                <SettingSeekSeconds direction='forward' />
+                <SettingSeekSeconds direction='backward' />
+              </View>
+              <SettingListSkip />
               <SettingLrcFontSize direction={direction} />
               <SettingLrcAlign />
             </View>

@@ -5,10 +5,12 @@ import Text from '@/components/common/Text'
 import { useTheme } from '@/store/theme/hook'
 import { useI18n } from '@/lang'
 
-export default memo(({ onConfirm, onHide, dirOnly }: {
+export default memo(({ onConfirm, onHide, dirOnly, selectedCount, multiSelect }: {
   onConfirm: () => void
   onHide: () => void
   dirOnly: boolean
+  selectedCount?: number
+  multiSelect?: boolean
 }) => {
   const t = useI18n()
   const theme = useTheme()
@@ -19,8 +21,8 @@ export default memo(({ onConfirm, onHide, dirOnly }: {
         <Text color={theme['c-button-font']}>{t('cancel')}</Text>
       </Button>
       {dirOnly
-        ? <Button style={styles.footerBtn} onPress={onConfirm}>
-            <Text color={theme['c-button-font']}>{t('confirm')}</Text>
+        ? <Button style={styles.footerBtn} onPress={onConfirm} disabled={multiSelect && !selectedCount}>
+            <Text color={theme['c-button-font']}>{multiSelect ? t('audio_files_import_count', { count: selectedCount ?? 0 }) : t('confirm')}</Text>
           </Button>
         : null
       }

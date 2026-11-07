@@ -1,7 +1,7 @@
 import ChoosePath, { type ChoosePathType } from '@/components/common/ChoosePath'
 import { LXM_FILE_EXT_RXP } from '@/config/constant'
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react'
-import { handleExport, handleImport, handleImportMediaFile } from './listAction'
+import { handleExport, handleImport, handleImportMediaFile, handleImportSelectedMediaFiles } from './listAction'
 
 export interface SelectInfo {
   listInfo: LX.List.MyListInfo
@@ -90,6 +90,7 @@ export default forwardRef<ListImportExportType, {}>((props, ref) => {
           title: global.i18n.t('list_select_local_file_desc'),
           dirOnly: true,
           isPersist: true,
+          audioFiles: true,
         })
       } else {
         setVisible(true)
@@ -98,6 +99,7 @@ export default forwardRef<ListImportExportType, {}>((props, ref) => {
             title: global.i18n.t('list_select_local_file_desc'),
             dirOnly: true,
             isPersist: true,
+            audioFiles: true,
           })
         })
       }
@@ -121,7 +123,9 @@ export default forwardRef<ListImportExportType, {}>((props, ref) => {
 
   return (
     visible
-      ? <ChoosePath ref={choosePathRef} onConfirm={onConfirmPath} />
+      ? <ChoosePath ref={choosePathRef} onConfirm={onConfirmPath} onConfirmMany={paths => {
+        if (selectInfoRef.current.action === 'selectFile') void handleImportSelectedMediaFiles(selectInfoRef.current.listInfo, paths)
+      }} />
       : null
   )
 })

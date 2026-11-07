@@ -24,6 +24,8 @@ const defaultSetting: LX.AppSetting = {
   'player.playbackRate': 1,
   'player.seekBackwardSeconds': 5,
   'player.seekForwardSeconds': 10,
+  'player.listSkip': {},
+  'player.songSkip': {},
   'player.cacheSize': '1024',
   'player.timeoutExit': '',
   'player.timeoutExitPlayed': true,
